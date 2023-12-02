@@ -178,9 +178,10 @@ class CustomRetriever(BaseRetriever):
 
         self._vector_retriever = vector_retriever
         self._kg_retriever = kg_retriever
-        if mode not in ("AND", "OR"):
+        if mode in {"AND", "OR"}:
+            self._mode = mode
+        else:
             raise ValueError("Invalid mode.")
-        self._mode = mode
 
     def _retrieve(self, query_bundle: QueryBundle) -> List[NodeWithScore]:
         """Retrieve nodes given query."""
@@ -199,8 +200,7 @@ class CustomRetriever(BaseRetriever):
         else:
             retrieve_ids = vector_ids.union(kg_ids)
 
-        retrieve_nodes = [combined_dict[rid] for rid in retrieve_ids]
-        return retrieve_nodes
+        return [combined_dict[rid] for rid in retrieve_ids]
 
 
 from llama_index import get_response_synthesizer
@@ -251,10 +251,7 @@ def cypher_to_all_paths(query):
     # Remove the old RETURN part from matches_string
     matches_string = matches_string.replace(return_part, "")
 
-    # Combine everything
-    modified_query = f"{matches_string}\n{return_string}"
-
-    return modified_query
+    return f"{matches_string}\n{return_string}"
 
 
 # write string to file
@@ -288,9 +285,9 @@ def render_pd_item(g, item):
         edge_name = item.edge_name()
         props = item.properties()
         # ensure start and end vertex exist in graph
-        if not src_id in g.node_ids:
+        if src_id not in g.node_ids:
             g.add_node(src_id)
-        if not dst_id in g.node_ids:
+        if dst_id not in g.node_ids:
             g.add_node(dst_id)
         g.add_edge(src_id, dst_id, label=edge_name, title=str(props))
     elif isinstance(item, PathWrapper):
